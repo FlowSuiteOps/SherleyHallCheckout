@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sherley Hall - Equipment Checkout (Live Shared)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --tcu-purple: #4d1979;
+            --tcu-purple-dark: #3a1159;
+            --tcu-purple-light: #6a2a9f;
+            --tcu-grey: #a3a9ac;
+            --tcu-white: #ffffff;
+            --color-bg-primary: #fcfcf9;
+            --color-text: #1f2121;
+            --color-border: rgba(77, 25, 121, 0.2);
+            --color-success: #21808d;
+            --color-error: #c0152f;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--tcu-purple) 0%, var(--tcu-purple-dark) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--color-text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: var(--tcu-white);
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .horned-frog-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: var(--tcu-white);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--tcu-purple);
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: var(--tcu-white);
+            color: var(--tcu-purple);
+        }
+
+        input::placeholder {
+            color: var(--tcu-grey);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--tcu-purple);
+            box-shadow: 0 0 0 3px rgba(77, 25, 121, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--tcu-purple);
+            cursor: pointer;
+        }
+
+        .radio-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+            color: var(--tcu-purple);
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .item-option {
+            padding: 12px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: var(--tcu-white);
+            color: #000;
+        }
+
+        .item-option:hover {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.05);
+        }
+
+        .item-option.selected {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.1);
+            font-weight: 600;
+        }
+
+        .item-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(77, 25, 121, 0.3);
+        }
+
+        .btn:hover:enabled {
+            background: var(--tcu-purple-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(77, 25, 121, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: default;
+        }
+
+        .success-message {
+            background: rgba(33, 128, 141, 0.15);
+            color: var(--color-success);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 600;
+            border: 2px solid var(--color-success);
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .transaction-log {
+            margin-top: 32px;
+        }
+
+        .transaction-log h2 {
+            color: var(--tcu-white);
+            margin-bottom: 16px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .transaction-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-button {
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--tcu-white);
+            background: transparent;
+            color: var(--tcu-white);
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-button.active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .search-input {
+            min-width: 180px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--color-border);
+            font-size: 0.9em;
+        }
+
+        .transaction-item {
+            background: var(--tcu-white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--tcu-purple);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .transaction-name {
+            font-weight: 700;
+            color: var(--tcu-purple);
+            font-size: 1.1em;
+        }
+
+        .transaction-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--tcu-purple);
+        }
+
+        .transaction-type.checkout::before {
+            content: "⏱️ ";
+        }
+
+        .transaction-type.return::before {
+            content: "✅ ";
+        }
+
+        .transaction-details {
+            color: #444;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .transaction-time {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .no-transactions {
+            text-align: center;
+            padding: 40px;
+            color: var(--tcu-grey);
+            font-style: italic;
+        }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.75em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-open {
+            background: rgba(192,21,47,0.08);
+            color: var(--color-error);
+        }
+
+        .status-closed {
+            background: rgba(33,128,141,0.12);
+            color: var(--color-success);
+        }
+
+        .status-overdue {
+            background: rgba(192,21,47,0.12);
+            color: var(--color-error);
+        }
+
+        .return-button {
+            margin-top: 10px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: none;
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .return-button:hover {
+            background: var(--tcu-purple-light);
+        }
+
+        .undo-button {
+            margin-left: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--tcu-purple);
+            background: transparent;
+            color: var(--tcu-purple);
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .undo-button:hover {
+            background: rgba(77,25,121,0.08);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.8em; }
+            .card { padding: 24px 16px; }
+            .radio-group { flex-direction: column; gap: 12px; }
+            .item-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="horned-frog-icon">🐸</div>
+            <h1>Sherley Hall</h1>
+            <div class="subtitle">Equipment Checkout System (Live)</div>
+        </div>
+
+        <div class="card">
+            <div id="successMessage" class="success-message">
+                Transaction recorded successfully! 🎉
+            </div>
+
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label for="residentName">Resident Name *</label>
+                    <input type="text" id="residentName" name="residentName" required placeholder="Enter your full name" list="residentNames">
+                </div>
+
+                <!-- Resident autocomplete list -->
+                <datalist id="residentNames">
+                    <!-- Keep your full list here; truncated for brevity -->
+                    <option value="Lizbeth Arteaga"></option>
+                    <option value="Keeley O'Meara"></option>
+                    <option value="Kinslee Fullner"></option>
+                    <option value="Matthew Smith"></option>
+                    <option value="Ezra Power"></option>
+                    <option value="Shelby Bush"></option>
+                    <option value="Mia Daley"></option>
+                    <option value="Ben Tinnes"></option>
+                    <option value="Josue Araica"></option>
+                    <!-- ... all other names you pasted earlier ... -->
+                </datalist>
+
+                <div class="form-group">
+                    <label>Transaction Type *</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="checkout" name="transactionType" value="checkout" checked>
+                            <label for="checkout">Check Out</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="return" name="transactionType" value="return">
+                            <label for="return">Return</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Equipment *</label>
+                    <div class="item-grid">
+                        <div class="item-option" data-item="HDMI Cable">
+                            <div class="item-icon">🔌</div>
+                            <div>HDMI Cable</div>
+                        </div>
+                        <div class="item-option" data-item="Pool Sticks">
+                            <div class="item-icon">🎱</div>
+                            <div>Pool Sticks</div>
+                        </div>
+                        <div class="item-option" data-item="Card Games">
+                            <div class="item-icon">🃏</div>
+                            <div>Card Games</div>
+                        </div>
+                        <div class="item-option" data-item="Board Games">
+                            <div class="item-icon">🎲</div>
+                            <div>Board Games</div>
+                        </div>
+                        <div class="item-option" data-item="Vacuum">
+                            <div class="item-icon">🧹</div>
+                            <div>Vacuum</div>
+                        </div>
+                        <div class="item-option" data-item="Tool Kit">
+                            <div class="item-icon">🔧</div>
+                            <div>Tool Kit</div>
+                        </div>
+                        <div class="item-option" data-item="Ping Pong">
+                            <div class="item-icon">🏓</div>
+                            <div>Ping Pong</div>
+                        </div>
+                        <div class="item-option" data-item="Extension Cord">
+                            <div class="item-icon">⚡</div>
+                            <div>Extension Cord</div>
+                        </div>
+                        <div class="item-option" data-item="Other">
+                            <div class="item-icon">➕</div>
+                            <div>Other</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedItem" name="selectedItem" required>
+
+                    <div id="otherItemGroup" class="form-group" style="display:none; margin-top:12px;">
+                        <label for="otherItem">Please describe the item *</label>
+                        <input type="text" id="otherItem" name="otherItem" placeholder="e.g., Tripod, speaker, etc.">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="staffMember">Checked Out By *</label>
+                    <select id="staffMember" name="staffMember" required>
+                        <option value="" disabled selected>Select staff member</option>
+                        <option>RA - Liz Arteaga</option>
+                        <option>RA - Kinslee Fullner</option>
+                        <option>RA - Matt Smith</option>
+                        <option>RA - Ezra Power</option>
+                        <option>RA - Shelby Bush</option>
+                        <option>RA - Cathleeen Johnsen</option>
+                        <option>RA - Aaron Kiah</option>
+                        <option>RA - Owen Forsthoffer</option>
+                        <option>RA - Kyler Moore</option>
+                        <option>RA - Mia Daley</option>
+                        <option>RA - Ben Tinnes</option>
+                        <option>RA - Josue Araica</option>
+                        <option>CA - Chilab Gurung</option>
+                        <option>CA - Zacarey Crump</option>
+                        <option>CA - Jacob Ellis</option>
+                        <option>CM - Sam Tran</option>
+                        <option>HD - Markel Harris</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="collateralItem">Collateral Item (ID or Keycard) *</label>
+                    <input type="text" id="collateralItem" name="collateralItem" required placeholder="e.g., Student ID, Room Key">
+                </div>
+
+                <button type="submit" class="btn">Submit Transaction</button>
+            </form>
+        </div>
+
+        <div class="transaction-log">
+            <h2>Recent Transactions</h2>
+            <div class="transaction-controls">
+                <div class="filter-group">
+                    <button type="button" class="filter-button active" data-filter="all">All</button>
+                    <button type="button" class="filter-button" data-filter="open">Currently Checked Out</button>
+                </div>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name or item">
+            </div>
+            <div id="transactionList">
+                <div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('checkoutForm');
+        const itemOptions = document.querySelectorAll('.item-option');
+        const selectedItemInput = document.getElementById('selectedItem');
+        const otherItemGroup = document.getElementById('otherItemGroup');
+        const otherItemInput = document.getElementById('otherItem');
+        const staffSelect = document.getElementById('staffMember');
+        const transactionList = document.getElementById('transactionList');
+        const successMessage = document.getElementById('successMessage');
+        const filterButtons = document.querySelectorAll('.filter-button');
+        const searchInputEl = document.getElementById('searchInput');
+        const submitButton = document.querySelector('.btn');
+
+        let transactions = [];
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        // Item selection
+        itemOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                itemOptions.forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                const value = option.getAttribute('data-item');
+                selectedItemInput.value = value;
+
+                if (value === 'Other') {
+                    otherItemGroup.style.display = 'block';
+                    otherItemInput.required = true;
+                    otherItemInput.focus();
+                } else {
+                    otherItemGroup.style.display = 'none';
+                    otherItemInput.required = false;
+                    otherItemInput.value = '';
+                }
+            });
+        });
+
+        function isOverdue(t) {
+            if (t.type !== 'checkout' || t.returned) return false;
+            const created = t.createdAt;
+            if (!created) return false;
+            const sixHoursMs = 6 * 60 * 60 * 1000;
+            return (Date.now() - created) > sixHoursMs;
+        }
+
+        function displayTransactions() {
+            if (!transactions || transactions.length === 0) {
+                transactionList.innerHTML = '<div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>';
+                return;
+            }
+
+            let list = [...transactions];
+
+            if (currentFilter === 'open') {
+                list = list.filter(t => t.type === 'checkout' && !t.returned);
+            }
+
+            if (searchTerm && searchTerm.trim() !== '') {
+                const term = searchTerm.trim().toLowerCase();
+                list = list.filter(t =>
+                    (t.name && t.name.toLowerCase().includes(term)) ||
+                    (t.item && t.item.toLowerCase().includes(term))
+                );
+            }
+
+            if (list.length === 0) {
+                transactionList.innerHTML = '<div class="no-transactions">No matching transactions found. 🔍</div>';
+                return;
+            }
+
+            transactionList.innerHTML = list.map(t => `
+                <div class="transaction-item ${t.type}">
+                    <div class="transaction-header">
+                        <span class="transaction-name">${t.name}</span>
+                        <span class="transaction-type ${t.type}">${t.type === 'checkout' ? 'Check Out' : 'Return'}</span>
+                    </div>
+                    <div class="transaction-details">
+                        <strong>Item:</strong> ${t.item}<br>
+                        <strong>Collateral:</strong> ${t.collateral}<br>
+                        <strong>Checked Out By:</strong> ${t.staff || 'Not recorded'}
+                        ${t.type === 'checkout' ? `<div style="margin-top:8px;">
+                            <span class="status-pill ${
+                                t.returned ? 'status-closed' : (isOverdue(t) ? 'status-overdue' : 'status-open')
+                            }">
+                                ${
+                                    t.returned
+                                        ? 'Returned'
+                                        : (isOverdue(t) ? 'Overdue (6+ hrs)' : 'Checked Out')
+                                }
+                            </span>
+                            ${!t.returned ? `<button class="return-button" type="button" onclick="markAsReturned(${t.id})">
+                                Mark Returned
+                            </button>` : ''}
+                            ${t.returned ? `<button class="undo-button" type="button" onclick="undoReturn(${t.id})">
+                                Undo
+                            </button>` : ''}
+                        </div>` : ''}
+                    </div>
+                    <div class="transaction-time">${t.timestamp || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function markAsReturned(id) {
+            const existing = transactions.find(t => t.id === id);
+            if (!existing || existing.type !== 'checkout' || existing.returned) return;
+
+            existing.returned = true;
+
+            const now = Date.now();
+            const returnTransaction = {
+                id: now,
+                name: existing.name,
+                type: 'return',
+                item: existing.item,
+                collateral: existing.collateral,
+                staff: existing.staff,
+                timestamp: new Date().toLocaleString(),
+                returned: true,
+                sourceId: existing.id,
+                createdAt: now
+            };
+
+            transactions.unshift(returnTransaction);
+            displayTransactions();
+            sendToGoogleSheets(returnTransaction);
+        }
+
+        function undoReturn(id) {
+            const checkout = transactions.find(t => t.id === id);
+            if (!checkout || checkout.type !== 'checkout' || !checkout.returned) return;
+
+            checkout.returned = false;
+            transactions = transactions.filter(t => !(t.type === 'return' && t.sourceId === id));
+            displayTransactions();
+        }
+
+        window.markAsReturned = markAsReturned;
+        window.undoReturn = undoReturn;
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter') || 'all';
+                displayTransactions();
+            });
+        });
+
+        if (searchInputEl) {
+            searchInputEl.addEventListener('input', () => {
+                searchTerm = searchInputEl.value;
+                displayTransactions();
+            });
+        }
+
+        // Send a transaction to Google Sheets (POST)
+        async function sendToGoogleSheets(transaction) {
+            try {
+                await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: transaction.name,
+                        collateral: transaction.collateral,
+                        item: transaction.item,
+                        type: transaction.type,
+                        checkedOutBy: transaction.staff
+                    })
+                });
+                console.log("Transaction sent to Google Sheets successfully");
+            } catch (error) {
+                console.error("Error sending to Google Sheets", error);
+            }
+        }
+
+        // Load live transactions from Google Sheets (GET)
+        async function loadLiveTransactions() {
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec');
+                const allTransactions = await response.json();
+
+                const now = Date.now();
+                transactions = (allTransactions || []).map((t, index) => {
+                    const ts = t.timestamp || t.time || "";
+                    const createdAt = t.createdAt
+                        || (ts ? (Date.parse(ts) || (now + index)) : (now + index));
+                    const type = t.type || t.checkoutReturn || 'checkout';
+                    const returned = (typeof t.returned !== 'undefined')
+                        ? t.returned
+                        : (type === 'return');
+
+                    return {
+                        id: t.id || (now + index),
+                        name: t.name || t.resident || "",
+                        type,
+                        item: t.item || "",
+                        collateral: t.collateral || "",
+                        staff: t.checkedOutBy || t.staff || "Not recorded",
+                        timestamp: ts,
+                        createdAt,
+                        returned
+                    };
+                });
+
+                displayTransactions();
+            } catch (error) {
+                console.error("Error loading live transactions", error);
+            }
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (!selectedItemInput.value) {
+                alert('Please select an equipment item.');
+                return;
+            }
+
+            const formData = new FormData(form);
+            let itemName = selectedItemInput.value;
+
+            if (itemName === 'Other') {
+                const otherText = otherItemInput.value.trim();
+                if (!otherText) {
+                    alert('Please describe the "Other" item.');
+                    otherItemInput.focus();
+                    return;
+                }
+                itemName = otherText;
+            }
+
+            const staff = formData.get('staffMember');
+            if (!staff) {
+                alert('Please choose who checked it out.');
+                return;
+            }
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Saving...';
+            }
+
+            const now = Date.now();
+            const type = formData.get('transactionType') || 'checkout';
+
+            const transaction = {
+                id: now,
+                name: formData.get('residentName'),
+                type: type,
+                item: itemName,
+                collateral: formData.get('collateralItem'),
+                staff: staff,
+                timestamp: new Date().toLocaleString(),
+                returned: type === 'return',
+                createdAt: now
+            };
+
+            // Optimistic update locally
+            transactions.unshift(transaction);
+            displayTransactions();
+            sendToGoogleSheets(transaction);
+
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+
+            form.reset();
+            itemOptions.forEach(o => o.classList.remove('selected'));
+            selectedItemInput.value = '';
+            otherItemGroup.style.display = 'none';
+            otherItemInput.required = false;
+            otherItemInput.value = '';
+
+            if (submitButton) {
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit Transaction';
+                }, 500);
+            }
+
+            // Optionally refresh from live source after a short delay
+            setTimeout(loadLiveTransactions, 2000);
+        });
+
+        // On page load: get live shared data and refresh every 60s
+        window.onload = function () {
+            loadLiveTransactions();
+            setInterval(loadLiveTransactions, 60000); // every 60 seconds
+        };
+    </script>
+</body>
+</html>
