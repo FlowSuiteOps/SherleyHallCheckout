@@ -621,7 +621,7 @@
             </div>
 
             <div id="transactionList">
-                <div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>
+                <div class="no-transactions">Loading transactions...</div>
             </div>
         </div>
     </div>
@@ -700,15 +700,38 @@
             datalist.appendChild(option);
         });
 
-        // Load transactions from localStorage
-        const loadTransactions = () => {
-            const saved = localStorage.getItem('sherleyTransactions');
-            if (saved) {
-                transactions = JSON.parse(saved);
+        // Load transactions from Google Sheets
+        async function loadFromGoogleSheets() {
+            try {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec?action=read');
+                const data = await response.json();
+                
+                if (data && data.rows && Array.isArray(data.rows)) {
+                    // Convert sheet rows to transaction objects
+                    data.rows.forEach((row, idx) => {
+                        // Row format: [Timestamp, name, Collateral, Item, Checkout/Return, checkedOutBy]
+                        if (row[1] && row[2] && row[3]) { // Name, Collateral, Item required
+                            const transaction = {
+                                id: idx,
+                                timestamp: row[0] || '',
+                                name: row[1] || '',
+                                collateral: row[2] || '',
+                                item: row[3] || '',
+                                type: (row[4] || '').toLowerCase() === 'checkout' ? 'checkout' : 'return',
+                                staff: row[5] || '',
+                                createdAt: Date.now() - (data.rows.length - idx) * 60000, // Estimate creation time
+                                returned: false
+                            };
+                            transactions.push(transaction);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Error loading from Google Sheets:", error);
             }
-            transactions = [];
+            
             displayTransactions();
-        };
+        }
 
         // Save transactions to localStorage
         const saveTransactions = () => {
@@ -952,7 +975,7 @@
         });
 
         // Load transactions on page load
-        loadTransactions();
+        loadFromGoogleSheets();
     </script>
 </body>
 </html>
