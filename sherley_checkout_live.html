@@ -704,22 +704,24 @@
         async function loadFromGoogleSheets() {
             try {
                 const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec?action=read');
-                const data = await response.json();
+                const rows = await response.json();
                 
-                if (data && data.rows && Array.isArray(data.rows)) {
-                    // Convert sheet rows to transaction objects
-                    data.rows.forEach((row, idx) => {
-                        // Row format: [Timestamp, name, Collateral, Item, Checkout/Return, checkedOutBy]
-                        if (row[1] && row[2] && row[3]) { // Name, Collateral, Item required
+                if (rows && Array.isArray(rows)) {
+                    rows.forEach((row, idx) => {
+                        // Skip header row (row 0 contains: Timestamp, name, Collateral, Item, etc.)
+                        if (idx === 0) return;
+                        
+                        // Each row is an object with keys: Timestamp, name, Collateral, Item, Checkout/Return, checkedOutBy
+                        if (row.name && row.Collateral && row.Item) {
                             const transaction = {
                                 id: idx,
-                                timestamp: row[0] || '',
-                                name: row[1] || '',
-                                collateral: row[2] || '',
-                                item: row[3] || '',
-                                type: (row[4] || '').toLowerCase() === 'checkout' ? 'checkout' : 'return',
-                                staff: row[5] || '',
-                                createdAt: Date.now() - (data.rows.length - idx) * 60000, // Estimate creation time
+                                timestamp: row.Timestamp || '',
+                                name: row.name || '',
+                                collateral: row.Collateral || '',
+                                item: row.Item || '',
+                                type: (row['Checkout/Return'] || '').toLowerCase() === 'checkout' ? 'checkout' : 'return',
+                                staff: row.checkedOutBy || '',
+                                createdAt: Date.now() - (rows.length - idx) * 60000,
                                 returned: false
                             };
                             transactions.push(transaction);
