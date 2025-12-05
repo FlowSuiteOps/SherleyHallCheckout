@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherley Hall - Equipment Checkout</title>
+    <style>
+        :root {
+            --tcu-purple: #4d1979;
+            --tcu-purple-dark: #3a1159;
+            --tcu-purple-light: #6a2a9f;
+            --tcu-grey: #a3a9ac;
+            --tcu-white: #ffffff;
+            --color-bg-primary: #fcfcf9;
+            --color-text: #1f2121;
+            --color-border: rgba(77, 25, 121, 0.2);
+            --color-success: #21808d;
+            --color-error: #c0152f;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-bg-primary: #1f2121;
+                --color-text: #f5f5f5;
+                --color-border: rgba(163, 169, 172, 0.3);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--tcu-purple) 0%, var(--tcu-purple-dark) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--color-text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: var(--tcu-white);
+            margin-bottom: 30px;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .horned-frog-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: var(--tcu-white);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--tcu-purple);
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: var(--tcu-white);
+            color: #000000;
+            font-family: inherit;
+        }
+
+        input[type="text"]::placeholder,
+        select::placeholder,
+        textarea::placeholder {
+            color: #999999;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--tcu-purple);
+            box-shadow: 0 0 0 3px rgba(77, 25, 121, 0.1);
+        }
+
+        #residentName,
+        #checkedOutBy,
+        #collateralItem,
+        #otherItemDescription {
+            width: 100%;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 24px;
+            margin-top: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--tcu-purple);
+            cursor: pointer;
+        }
+
+        .radio-option label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            text-transform: none;
+            letter-spacing: normal;
+            color: #000000;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px 32px;
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 12px rgba(77, 25, 121, 0.3);
+        }
+
+        .btn:hover {
+            background: var(--tcu-purple-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(77, 25, 121, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .transaction-log {
+            margin-top: 32px;
+        }
+
+        .transaction-log h2 {
+            color: var(--tcu-white);
+            margin-bottom: 16px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--tcu-white);
+            background: transparent;
+            color: var(--tcu-white);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: var(--tcu-white);
+            color: var(--tcu-purple);
+        }
+
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1em;
+            color: #000000;
+        }
+
+        .search-box input::placeholder {
+            color: #999999;
+        }
+
+        .transaction-item {
+            background: var(--tcu-white);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--tcu-purple);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(4px);
+        }
+
+        .transaction-item.checkout {
+            border-left-color: var(--color-success);
+        }
+
+        .transaction-item.return {
+            border-left-color: var(--tcu-grey);
+        }
+
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .transaction-name {
+            font-weight: 700;
+            color: var(--tcu-purple);
+            font-size: 1.1em;
+        }
+
+        .transaction-type {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .transaction-type.checkout {
+            background: rgba(77, 25, 121, 0.15);
+            color: var(--tcu-purple);
+            font-weight: 700;
+        }
+
+        .transaction-type.return {
+            background: rgba(163, 169, 172, 0.15);
+            color: #000000;
+        }
+
+        .transaction-details {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .transaction-time {
+            color: #999;
+            font-size: 0.85em;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .transaction-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.mark-returned {
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+        }
+
+        .action-btn.mark-returned:hover {
+            background: var(--tcu-purple-light);
+        }
+
+        .action-btn.undo {
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+            border: 1px solid var(--tcu-purple);
+        }
+
+        .action-btn.undo:hover {
+            background: var(--tcu-purple-light);
+        }
+
+        .no-transactions {
+            text-align: center;
+            padding: 40px;
+            color: var(--tcu-grey);
+            font-style: italic;
+        }
+
+        .success-message {
+            background: rgba(33, 128, 141, 0.15);
+            color: var(--color-success);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 600;
+            border: 2px solid var(--color-success);
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .item-option {
+            padding: 24px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: var(--tcu-white);
+            color: #000000;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .item-option:hover {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.05);
+        }
+
+        .item-option.selected {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.1);
+            font-weight: 600;
+        }
+
+        .item-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-option[data-item="Other"] .item-icon {
+            font-size: 3em;
+            color: var(--tcu-purple);
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .status-badge.returned {
+            background: rgba(33, 128, 141, 0.2);
+            color: var(--color-success);
+        }
+
+        .status-badge.overdue {
+            background: rgba(192, 21, 47, 0.2);
+            color: var(--color-error);
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .card {
+                padding: 24px 16px;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .item-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="horned-frog-icon">🐸</div>
+            <h1>Sherley Hall</h1>
+            <div class="subtitle">Equipment Checkout System</div>
+        </div>
+
+        <div class="card">
+            <div id="successMessage" class="success-message">
+                Transaction recorded successfully! 🎉
+            </div>
+
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label for="residentName">Resident Name *</label>
+                    <input type="text" id="residentName" name="residentName" list="residents" required placeholder="Type resident name...">
+                    <datalist id="residents">
+                        <!-- Will be populated by JS -->
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label>Transaction Type *</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="checkout" name="transactionType" value="checkout" checked>
+                            <label for="checkout">Check Out</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="return" name="transactionType" value="return">
+                            <label for="return">Return</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Select Equipment *</label>
+                    <div class="item-grid">
+                        <div class="item-option" data-item="HDMI Cable">
+                            <div class="item-icon">🔌</div>
+                            <div>HDMI Cable</div>
+                        </div>
+                        <div class="item-option" data-item="Pool Sticks">
+                            <div class="item-icon">🎱</div>
+                            <div>Pool Sticks</div>
+                        </div>
+                        <div class="item-option" data-item="Card Games">
+                            <div class="item-icon">🃏</div>
+                            <div>Card Games</div>
+                        </div>
+                        <div class="item-option" data-item="Board Games">
+                            <div class="item-icon">🎲</div>
+                            <div>Board Games</div>
+                        </div>
+                        <div class="item-option" data-item="Vacuum">
+                            <div class="item-icon">🧹</div>
+                            <div>Vacuum</div>
+                        </div>
+                        <div class="item-option" data-item="Tool Kit">
+                            <div class="item-icon">🔧</div>
+                            <div>Tool Kit</div>
+                        </div>
+                        <div class="item-option" data-item="Ping Pong">
+                            <div class="item-icon">🏓</div>
+                            <div>Ping Pong</div>
+                        </div>
+                        <div class="item-option" data-item="Extension Cord">
+                            <div class="item-icon">⚡</div>
+                            <div>Extension Cord</div>
+                        </div>
+                        <div class="item-option" data-item="Other">
+                            <div class="item-icon">+</div>
+                            <div>Other</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="selectedItem" name="selectedItem" required>
+                </div>
+
+                <div class="form-group hidden" id="otherItemGroup">
+                    <label for="otherItemDescription">Please describe item *</label>
+                    <input type="text" id="otherItemDescription" name="otherItemDescription" placeholder="Enter item description...">
+                </div>
+
+                <div class="form-group">
+                    <label for="collateralItem">Collateral Item (ID or Keycard) *</label>
+                    <input type="text" id="collateralItem" name="collateralItem" required placeholder="e.g., Student ID, Room Key">
+                </div>
+
+                <div class="form-group">
+                    <label for="checkedOutBy">Checked Out By *</label>
+                    <select id="checkedOutBy" name="checkedOutBy" required>
+                        <option value="">Select staff member</option>
+                        <option value="RA - Liz Arteaga">RA - Liz Arteaga</option>
+                        <option value="RA - Kinslee Fullner">RA - Kinslee Fullner</option>
+                        <option value="RA - Matt Smith">RA - Matt Smith</option>
+                        <option value="RA - Ezra Power">RA - Ezra Power</option>
+                        <option value="RA - Shelby Bush">RA - Shelby Bush</option>
+                        <option value="RA - Cathleen Johnsen">RA - Cathleen Johnsen</option>
+                        <option value="RA - Aaron Kiah">RA - Aaron Kiah</option>
+                        <option value="RA - Owen Forsthoffer">RA - Owen Forsthoffer</option>
+                        <option value="RA - Kyler Moore">RA - Kyler Moore</option>
+                        <option value="RA - Mia Daley">RA - Mia Daley</option>
+                        <option value="RA - Ben Tinnes">RA - Ben Tinnes</option>
+                        <option value="RA - Josue Araica">RA - Josue Araica</option>
+                        <option value="CA - Chilab Gurung">CA - Chilab Gurung</option>
+                        <option value="CA - Zacarey Crump">CA - Zacarey Crump</option>
+                        <option value="CA - Jacob Ellis">CA - Jacob Ellis</option>
+                        <option value="CM - Sam Tran">CM - Sam Tran</option>
+                        <option value="HD - Markel Harris">HD - Markel Harris</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Submit Transaction</button>
+            </form>
+        </div>
+
+        <div class="transaction-log">
+            <h2>Recent Transactions</h2>
+            
+            <div class="search-box">
+                <input type="text" id="searchBox" placeholder="Search by name or item">
+            </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">ALL</button>
+                <button class="filter-btn" data-filter="checked-out">CURRENTLY CHECKED OUT</button>
+            </div>
+
+            <div id="transactionList">
+                <div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('checkoutForm');
+        const itemOptions = document.querySelectorAll('.item-option');
+        const selectedItemInput = document.getElementById('selectedItem');
+        const otherItemGroup = document.getElementById('otherItemGroup');
+        const otherItemDescription = document.getElementById('otherItemDescription');
+        const transactionList = document.getElementById('transactionList');
+        const successMessage = document.getElementById('successMessage');
+        const searchBox = document.getElementById('searchBox');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let transactions = [];
+        let currentFilter = 'all';
+
+        // Resident list for autocomplete - ALL 400+ RESIDENTS
+        const residents = [
+            "Lizabeth Arteaga", "Keeley O'Meara", "Yasmin Robertson", "Hailey Rosenberg", "Grace Clark", "Caitlin McFadden",
+            "Sophia Sansone", "Jacqueline Moreno", "Priscilla Basurto", "Scarlett Fritz", "Emory Eves", "Kennedi Wingfield",
+            "Kylie Crews", "Emma Leland", "Adelaide Kauchak", "Ashley Rogers", "Sophia Beran", "Eliana Wade", "Blessing Musau",
+            "Kendra Broom", "Bethany Stanley", "Gabby Pouncey", "Grace O'Connor", "Molly Pawsat", "Ella Growe", "Ashley Behan",
+            "Eve Finley", "Hanna Slama", "Ava Kunkel", "Bella Lupi", "Parmida Faizy", "Addy Cassell", "Deisy Trejo", "Karla Pichales",
+            "Sophie Hooker", "Emmaline Byrd", "Anna Potrusilova", "Melissa Gutierrez", "Brooke Murdock", "Keira Kinnison",
+            "Kinslee Fullner", "Kate Ellison", "Jaclyn Franciosa", "Maygan Munoz", "Brooke Burnor", "Caroline Griffith", "Reese Ruffalo",
+            "Meredith Tovey", "Charlotte Palen", "Maggie Lopez", "Piper Dunn", "Bria Mancuso", "Sophia Donnelly", "Avery Roughen",
+            "Frida Najera", "Lily Jeffrey-Patton", "Matthew Smith", "David Laurent", "Cade Kvarda", "Sebastian Aleksander", "Benjamin Vu",
+            "Giancarlo Rodriguez", "Chilab Gurung", "Patrick Troy", "Beckham Moses", "Jack Genovese", "Nick Macias", "Braxton Durrett",
+            "John Collins", "Cameron Ryle", "Ezra Power", "Hugo Sutton", "Max Courson", "Benjamin Brucato", "Luke Nguyen", "Anthony Ferullo",
+            "Jalen Walker", "Luke Lammot", "Hayden Hinds", "Jack Bottini", "Cade Alcantara", "Michael Pulvirenti", "Joe Revelos",
+            "Samson Romano", "Sidd Krishnamurthy", "Will Hedstrom", "Emmett Pratt", "Ryder Grieb", "Nik Hart", "John McNamara",
+            "Gavin Eades", "Brian Mata Mata", "Blake Schimmel", "William Everitt", "Dylan Palmer", "Watson Fleming", "Tommy Sticha",
+            "Pablo Lambreton Hervella", "Sony Vo", "Jake Bock", "Jake Engstrom", "Charles Coniaris", "Ashton Hendel", "Sammy Stremick",
+            "Carson Bradway", "Aaron Kiah", "Will Wood", "Brady Gustafson", "Max Roeder", "Charlie Lobb", "McCovey Jackson", "Andrew Watson",
+            "Andrew Lubbeck", "DJ Duntz", "Alex Kneas", "Reagan Wright", "Alejandro Arellano", "Jack Devine", "Dallas Womack", "Jax Nelson",
+            "Ben Olivero", "Zacarey Crump", "Logan Thistle", "Conner McLeod", "John Ghannoum", "Braden Boone", "Trevor Melton", "Ryan Miller",
+            "Voss Finkelstein", "Jake Trimble", "Henry Ferrari", "Martin Passino", "Brett Frauenhofer", "Tully De Smet", "Dutch Linerud",
+            "Kyler Patridge", "Caden Pratt", "Ethan Stell", "Ando Butner", "TJ Weber", "Scott Barrett", "Cade Rosenthal", "Tyler Spellman",
+            "Tino Rios", "Owen Forsthoffer", "Noah Epstein", "Wesley Rickers", "Adityakumar Linganuri", "Thor Gjerdrum", "Dominic DeRosa",
+            "Ryan Dunne", "Will Golinvaux", "Nicolas Leonard", "Steven Fridrich", "Keegan Glynn", "Harrison Ceppa", "Hardy Reisner",
+            "Riley Regan", "Alexander Hoshimi", "Beck Wesley", "Cathleen Johnsen", "Grace Twomey", "Amelia Bartsch", "Angelina Wiens",
+            "Abby Sjobeck", "Jessica Ward", "Abby Smith", "Reese Aldridge", "Sally Murrah", "Cassadie Armstrong", "Madi Weber", "Rachel Lear",
+            "Lucy Lakefish", "Shelby Bush", "Makayla Thompkins", "Janiya Odom", "Camila Bucio", "Carter Moore", "Gabrielle Dinan",
+            "Addie Redifer", "Alanys Freitas", "Keelyn Trubovich", "Gaby Manzur", "Margot McFarlane", "Elyse Ennis", "Izzy Conley",
+            "Sophia Ramsey", "Addy White", "Valeria Salinas", "Isabella Graham", "Iliana Almaraz", "Karina Kiesling", "Nathalie Ghannoum",
+            "Frida Riojas", "Tyler Bristol", "Sienna Wilkinson", "Lilianna Ramos", "Camila Aranda", "Sy'Rai Lee", "Keshia Hitoto",
+            "Karina Rodriguez-Alcorta", "Aubrey Perez", "Brilynn Conchas", "Gweneth Parker", "Samiya Lane", "Malorye Foster", "Amy Zollinger",
+            "Nora Fogarty", "Abbie Galloway", "Cha Cha Whitaker", "Emily Holladay", "Lisette Adrogue", "Macy Fitz", "Whitney Grunow",
+            "Jillian Sisley", "Mia Daley", "Sofia Brodie", "Charlotte Reed", "Ngoc Nguyen", "Nguyen Bao Phuc Do", "Maddy Dolence",
+            "Finley Clark", "Ashley Martin", "Blair Cooper", "Sarah Emery", "Darby Schroeder", "Emma Machado", "Kaitlyn Schroeder",
+            "Audrey Sell", "Joselyn Casas Suarez", "Sophie Siems", "Grace Wolff", "Zoe Vostry", "McKenna Morgan", "Sadie Tripaldi",
+            "Katie Barmmer", "Cate Thibeault", "Addison Besel", "Brigid Shane", "Sloane Longaker", "Sophia Curran", "Melina Nitsiotis",
+            "Aislin Fairchild", "Emily Clark", "Makayla Guerra", "Jasmine Perez", "Maia Rodriguez", "Coco Ardell", "Catie Schmitt",
+            "Ashley James", "Hannah McCann", "Morgan Miller", "Stella Boyd", "Makenzie Robinson", "Mia Martinez", "Kyler Moore",
+            "Lauren Mobeck", "Maddie Merchant", "Rylee Page", "Kate Meixelsperger", "Ryann Frazier", "Emme Weis", "Anabelle Budde",
+            "Claire Cox", "Lexi Thomas", "Ava Barton", "Amelia Sharpe", "Kaylee Roth", "Lucy O'Brien", "Claire Weindling", "Avery Yerasimides",
+            "Ben Tinnes", "Tyler Rager", "Brayden Winn", "Zion Junk", "Alex Miller", "Tobias Do", "Mark Tripple", "Spencer Smith",
+            "Connor Farris", "Alex Pisano", "Quinlan Hughes", "Zach Harlow", "Nicola Baccherini", "Giri Anup", "Josue Araica",
+            "Blaine Baker", "Connor Newman", "Emmett Nivaud", "Brady Evans", "AJ Dickinson", "Brian Macchiarola", "Nicholas Schroeder",
+            "Braxton Lewis", "Diego Pozos", "Ashton Wiseneske", "Allen Hernandez-Castro", "Stockard Bragan", "Will Gordon",
+            "Gavin Wupperman", "Max Nelson", "Landon Shaver", "Sam Tran", "Kristopher Thomas", "Derek Neal", "Brendan Baldelli",
+            "Jack Luster", "Andrew Schaeffer", "Jovanni Guerrero", "Jake Robertson", "Carlos Quintanilla", "Huesten Kolvet",
+            "Quentin DelSignore", "Jacob Ellis", "Khang Lam", "Davis Garrett", "Jacob Berg", "Adam Berg", "Parker Rice", "Baker Schell",
+            "Gabriel Mora", "Edwin Mireles", "Sam Trego", "Edwin Siembieda", "Gavin Reed", "Israel Ledezma", "Michael Finn",
+            "Jack Lachanski"
+        ];
+
+        // Populate datalist
+        const datalist = document.getElementById('residents');
+        residents.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        });
+
+        // Load transactions from localStorage
+        const loadTransactions = () => {
+            const saved = localStorage.getItem('sherleyTransactions');
+            if (saved) {
+                transactions = JSON.parse(saved);
+            }
+            transactions = [];
+            displayTransactions();
+        };
+
+        // Save transactions to localStorage
+        const saveTransactions = () => {
+            localStorage.setItem('sherleyTransactions', JSON.stringify(transactions));
+        };
+
+        // Handle item selection
+        itemOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                itemOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                const item = option.getAttribute('data-item');
+                selectedItemInput.value = item;
+                
+                if (item === 'Other') {
+                    otherItemGroup.classList.remove('hidden');
+                    otherItemDescription.required = true;
+                } else {
+                    otherItemGroup.classList.add('hidden');
+                    otherItemDescription.required = false;
+                    otherItemDescription.value = '';
+                }
+            });
+        });
+
+        // Handle form submission
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (!selectedItemInput.value) {
+                alert('Please select an equipment item');
+                return;
+            }
+
+            if (selectedItemInput.value === 'Other' && !otherItemDescription.value.trim()) {
+                alert('Please describe the item');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            const formData = new FormData(form);
+            const timestamp = new Date().toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit',
+                hour12: true,
+                timeZone: 'America/Chicago'
+            });
+
+            const item = selectedItemInput.value === 'Other' 
+                ? otherItemDescription.value 
+                : selectedItemInput.value;
+
+            const transaction = {
+                id: Date.now(),
+                name: formData.get('residentName'),
+                type: formData.get('transactionType'),
+                item: item,
+                collateral: formData.get('collateralItem'),
+                staff: formData.get('checkedOutBy'),
+                timestamp: timestamp,
+                createdAt: Date.now(),
+                returned: false
+            };
+
+            if (transaction.type === 'return') {
+                const checkout = transactions.find(t => 
+                    t.name === transaction.name && 
+                    t.item === transaction.item && 
+                    t.type === 'checkout' && 
+                    !t.returned
+                );
+                if (checkout) {
+                    checkout.returned = true;
+                }
+            }
+
+            transactions.unshift(transaction);
+            saveTransactions();
+            displayTransactions();
+
+            sendToGoogleSheets(transaction);
+
+            successMessage.classList.add('show');
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 3000);
+
+            form.reset();
+            itemOptions.forEach(opt => opt.classList.remove('selected'));
+            selectedItemInput.value = '';
+            otherItemGroup.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Transaction';
+        });
+
+        // Send to Google Sheets
+        async function sendToGoogleSheets(transaction) {
+            try {
+                await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timestamp: transaction.timestamp,
+                        name: transaction.name,
+                        collateral: transaction.collateral,
+                        item: transaction.item,
+                        type: transaction.type,
+                        checkedOutBy: transaction.staff
+                    })
+                });
+            } catch (error) {
+                console.error("Error sending to Google Sheets:", error);
+            }
+        }
+
+        // Mark as returned
+        window.markReturned = (id) => {
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction && !transaction.returned) {
+                const returnTime = new Date().toLocaleString('en-US', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit',
+                    hour12: true,
+                    timeZone: 'America/Chicago'
+                });
+                transaction.returned = true;
+                transaction.returnedAt = returnTime;
+                saveTransactions();
+                displayTransactions();
+
+                const returnRecord = {
+                    id: Date.now(),
+                    name: transaction.name,
+                    type: 'return',
+                    item: transaction.item,
+                    collateral: transaction.collateral,
+                    staff: transaction.staff,
+                    timestamp: returnTime,
+                    createdAt: Date.now(),
+                    returned: true
+                };
+                sendToGoogleSheets(returnRecord);
+            }
+        };
+
+        // Undo return
+        window.undoReturn = (id) => {
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction && transaction.returned) {
+                transaction.returned = false;
+                saveTransactions();
+                displayTransactions();
+            }
+        };
+
+        // Display transactions
+        const displayTransactions = () => {
+            const searchTerm = searchBox.value.toLowerCase();
+            let filtered = transactions;
+
+            if (searchTerm) {
+                filtered = filtered.filter(t => 
+                    t.name.toLowerCase().includes(searchTerm) ||
+                    t.item.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (currentFilter === 'checked-out') {
+                filtered = filtered.filter(t => t.type === 'checkout' && !t.returned);
+            }
+
+            if (filtered.length === 0) {
+                transactionList.innerHTML = '<div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>';
+                return;
+            }
+
+            transactionList.innerHTML = filtered.map(t => {
+                const now = Date.now();
+                const ageHours = (now - t.createdAt) / (1000 * 60 * 60);
+                const isOverdue = t.type === 'checkout' && !t.returned && ageHours >= 6;
+
+                let statusBadge = '';
+                let actionButtons = '';
+
+                if (t.type === 'checkout') {
+                    if (t.returned) {
+                        statusBadge = '<span class="status-badge returned">✓ RETURNED</span>';
+                        const returnedTime = t.returnedAt || t.timestamp;
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn undo" onclick="undoReturn(${t.id})">UNDO</button>
+                        </div>
+                        <div class="transaction-time">Returned: ${returnedTime}</div>`;
+                    } else if (isOverdue) {
+                        statusBadge = '<span class="status-badge overdue">⚠ OVERDUE (6+ HRS)</span>';
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn mark-returned" onclick="markReturned(${t.id})">MARK RETURNED</button>
+                        </div>`;
+                    } else {
+                        statusBadge = '<span class="status-badge">📋 CHECKED OUT</span>';
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn mark-returned" onclick="markReturned(${t.id})">MARK RETURNED</button>
+                        </div>`;
+                    }
+                } else {
+                    statusBadge = '<span class="status-badge return">✓ RETURN</span>';
+                }
+
+                return `
+                    <div class="transaction-item ${t.type}">
+                        <div class="transaction-header">
+                            <span class="transaction-name">${t.name}</span>
+                            <span class="transaction-type ${t.type}">${t.type === 'checkout' ? '📤 CHECK OUT' : '📥 RETURN'}</span>
+                        </div>
+                        <div class="transaction-details">
+                            <strong>Item:</strong> ${t.item}<br>
+                            <strong>Collateral:</strong> ${t.collateral}<br>
+                            <strong>Checked Out By:</strong> ${t.staff}
+                        </div>
+                        ${statusBadge}
+                        <div class="transaction-time">${t.timestamp}</div>
+                        ${actionButtons}
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Search functionality
+        searchBox.addEventListener('input', () => {
+            displayTransactions();
+        });
+
+        // Filter buttons
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                displayTransactions();
+            });
+        });
+
+        // Load transactions on page load
+        loadTransactions();
+    </script>
+</body>
+</html>
