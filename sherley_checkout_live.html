@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sherley Hall - Equipment Checkout (Live Shared)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sherley Hall - Equipment Checkout</title>
     <style>
         :root {
             --tcu-purple: #4d1979;
@@ -18,8 +18,22 @@
             --color-error: #c0152f;
         }
 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-bg-primary: #1f2121;
+                --color-text: #f5f5f5;
+                --color-border: rgba(163, 169, 172, 0.3);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--tcu-purple) 0%, var(--tcu-purple-dark) 100%);
             min-height: 100vh;
             padding: 20px;
@@ -46,6 +60,7 @@
             font-size: 2.5em;
             margin-bottom: 10px;
             font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .header .subtitle {
@@ -82,7 +97,10 @@
         }
 
         input[type="text"],
-        select {
+        input[type="date"],
+        input[type="time"],
+        select,
+        textarea {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid var(--color-border);
@@ -90,18 +108,36 @@
             font-size: 1em;
             transition: all 0.3s ease;
             background: var(--tcu-white);
-            color: var(--tcu-purple);
+            color: #000000;
+            font-family: inherit;
         }
 
-        input::placeholder {
-            color: var(--tcu-grey);
+        input[type="text"]::placeholder,
+        select::placeholder,
+        textarea::placeholder {
+            color: #999999;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
         }
 
         input:focus,
-        select:focus {
+        select:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--tcu-purple);
             box-shadow: 0 0 0 3px rgba(77, 25, 121, 0.1);
+        }
+
+        #residentName,
+        #checkedOutBy,
+        #collateralItem,
+        #otherItemDescription {
+            width: 100%;
+            display: block;
+            box-sizing: border-box;
         }
 
         .radio-group {
@@ -130,41 +166,7 @@
             font-weight: 500;
             text-transform: none;
             letter-spacing: normal;
-            color: var(--tcu-purple);
-        }
-
-        .item-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-            gap: 12px;
-            margin-top: 12px;
-        }
-
-        .item-option {
-            padding: 12px;
-            border: 2px solid var(--color-border);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            background: var(--tcu-white);
-            color: #000;
-        }
-
-        .item-option:hover {
-            border-color: var(--tcu-purple);
-            background: rgba(77, 25, 121, 0.05);
-        }
-
-        .item-option.selected {
-            border-color: var(--tcu-purple);
-            background: rgba(77, 25, 121, 0.1);
-            font-weight: 600;
-        }
-
-        .item-icon {
-            font-size: 2em;
-            margin-bottom: 8px;
+            color: #000000;
         }
 
         .btn {
@@ -183,31 +185,19 @@
             box-shadow: 0 4px 12px rgba(77, 25, 121, 0.3);
         }
 
-        .btn:hover:enabled {
+        .btn:hover {
             background: var(--tcu-purple-light);
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(77, 25, 121, 0.4);
         }
 
+        .btn:active {
+            transform: translateY(0);
+        }
+
         .btn:disabled {
-            opacity: 0.7;
-            cursor: default;
-        }
-
-        .success-message {
-            background: rgba(33, 128, 141, 0.15);
-            color: var(--color-success);
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            text-align: center;
-            font-weight: 600;
-            border: 2px solid var(--color-success);
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         .transaction-log {
@@ -221,44 +211,44 @@
             text-align: center;
         }
 
-        .transaction-controls {
+        .filters {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
         }
 
-        .filter-button {
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--tcu-white);
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid var(--tcu-white);
             background: transparent;
             color: var(--tcu-white);
-            font-size: 0.8em;
-            font-weight: 600;
+            border-radius: 20px;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
-        .filter-button.active {
-            background: rgba(255,255,255,0.15);
+        .filter-btn.active {
+            background: var(--tcu-white);
+            color: var(--tcu-purple);
         }
 
-        .search-input {
-            min-width: 180px;
-            padding: 8px 12px;
-            border-radius: 999px;
-            border: 1px solid var(--color-border);
-            font-size: 0.9em;
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 1em;
+            color: #000000;
+        }
+
+        .search-box input::placeholder {
+            color: #999999;
         }
 
         .transaction-item {
@@ -267,7 +257,20 @@
             padding: 20px;
             margin-bottom: 12px;
             border-left: 4px solid var(--tcu-purple);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(4px);
+        }
+
+        .transaction-item.checkout {
+            border-left-color: var(--color-success);
+        }
+
+        .transaction-item.return {
+            border-left-color: var(--tcu-grey);
         }
 
         .transaction-header {
@@ -290,28 +293,66 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .transaction-type.checkout {
+            background: rgba(77, 25, 121, 0.15);
             color: var(--tcu-purple);
+            font-weight: 700;
         }
 
-        .transaction-type.checkout::before {
-            content: "⏱️ ";
-        }
-
-        .transaction-type.return::before {
-            content: "✅ ";
+        .transaction-type.return {
+            background: rgba(163, 169, 172, 0.15);
+            color: #000000;
         }
 
         .transaction-details {
-            color: #444;
+            color: #666;
             font-size: 0.95em;
             line-height: 1.6;
+            margin-bottom: 8px;
         }
 
         .transaction-time {
             color: #999;
             font-size: 0.85em;
-            margin-top: 8px;
             font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .transaction-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.mark-returned {
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+        }
+
+        .action-btn.mark-returned:hover {
+            background: var(--tcu-purple-light);
+        }
+
+        .action-btn.undo {
+            background: var(--tcu-purple);
+            color: var(--tcu-white);
+            border: 1px solid var(--tcu-purple);
+        }
+
+        .action-btn.undo:hover {
+            background: var(--tcu-purple-light);
         }
 
         .no-transactions {
@@ -321,71 +362,132 @@
             font-style: italic;
         }
 
-        .status-pill {
-            padding: 4px 10px;
-            border-radius: 999px;
+        .success-message {
+            background: rgba(33, 128, 141, 0.15);
+            color: var(--color-success);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 600;
+            border: 2px solid var(--color-success);
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .item-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .item-option {
+            padding: 24px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            background: var(--tcu-white);
+            color: #000000;
+            position: relative;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .item-option:hover {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.05);
+        }
+
+        .item-option.selected {
+            border-color: var(--tcu-purple);
+            background: rgba(77, 25, 121, 0.1);
+            font-weight: 600;
+        }
+
+        .item-icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .item-option[data-item="Other"] .item-icon {
+            font-size: 3em;
+            color: var(--tcu-purple);
+            font-weight: 300;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 0.75em;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-right: 8px;
         }
 
-        .status-open {
-            background: rgba(192,21,47,0.08);
-            color: var(--color-error);
-        }
-
-        .status-closed {
-            background: rgba(33,128,141,0.12);
+        .status-badge.returned {
+            background: rgba(33, 128, 141, 0.2);
             color: var(--color-success);
         }
 
-        .status-overdue {
-            background: rgba(192,21,47,0.12);
+        .status-badge.overdue {
+            background: rgba(192, 21, 47, 0.2);
             color: var(--color-error);
         }
 
-        .return-button {
-            margin-top: 10px;
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: none;
-            background: var(--tcu-purple);
-            color: var(--tcu-white);
-            font-size: 0.8em;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .return-button:hover {
-            background: var(--tcu-purple-light);
-        }
-
-        .undo-button {
-            margin-left: 8px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid var(--tcu-purple);
-            background: transparent;
-            color: var(--tcu-purple);
-            font-size: 0.75em;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .undo-button:hover {
-            background: rgba(77,25,121,0.08);
-        }
-
         @media (max-width: 600px) {
-            .header h1 { font-size: 1.8em; }
-            .card { padding: 24px 16px; }
-            .radio-group { flex-direction: column; gap: 12px; }
-            .item-grid { grid-template-columns: 1fr; }
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .card {
+                padding: 24px 16px;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .item-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .filter-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -394,7 +496,7 @@
         <div class="header">
             <div class="horned-frog-icon">🐸</div>
             <h1>Sherley Hall</h1>
-            <div class="subtitle">Equipment Checkout System (Live)</div>
+            <div class="subtitle">Equipment Checkout System</div>
         </div>
 
         <div class="card">
@@ -405,23 +507,11 @@
             <form id="checkoutForm">
                 <div class="form-group">
                     <label for="residentName">Resident Name *</label>
-                    <input type="text" id="residentName" name="residentName" required placeholder="Enter your full name" list="residentNames">
+                    <input type="text" id="residentName" name="residentName" list="residents" required placeholder="Type resident name...">
+                    <datalist id="residents">
+                        <!-- Will be populated by JS -->
+                    </datalist>
                 </div>
-
-                <!-- Resident autocomplete list -->
-                <datalist id="residentNames">
-                    <!-- Keep your full list here; truncated for brevity -->
-                    <option value="Lizbeth Arteaga"></option>
-                    <option value="Keeley O'Meara"></option>
-                    <option value="Kinslee Fullner"></option>
-                    <option value="Matthew Smith"></option>
-                    <option value="Ezra Power"></option>
-                    <option value="Shelby Bush"></option>
-                    <option value="Mia Daley"></option>
-                    <option value="Ben Tinnes"></option>
-                    <option value="Josue Araica"></option>
-                    <!-- ... all other names you pasted earlier ... -->
-                </datalist>
 
                 <div class="form-group">
                     <label>Transaction Type *</label>
@@ -473,40 +563,16 @@
                             <div>Extension Cord</div>
                         </div>
                         <div class="item-option" data-item="Other">
-                            <div class="item-icon">➕</div>
+                            <div class="item-icon">+</div>
                             <div>Other</div>
                         </div>
                     </div>
                     <input type="hidden" id="selectedItem" name="selectedItem" required>
-
-                    <div id="otherItemGroup" class="form-group" style="display:none; margin-top:12px;">
-                        <label for="otherItem">Please describe the item *</label>
-                        <input type="text" id="otherItem" name="otherItem" placeholder="e.g., Tripod, speaker, etc.">
-                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="staffMember">Checked Out By *</label>
-                    <select id="staffMember" name="staffMember" required>
-                        <option value="" disabled selected>Select staff member</option>
-                        <option>RA - Liz Arteaga</option>
-                        <option>RA - Kinslee Fullner</option>
-                        <option>RA - Matt Smith</option>
-                        <option>RA - Ezra Power</option>
-                        <option>RA - Shelby Bush</option>
-                        <option>RA - Cathleeen Johnsen</option>
-                        <option>RA - Aaron Kiah</option>
-                        <option>RA - Owen Forsthoffer</option>
-                        <option>RA - Kyler Moore</option>
-                        <option>RA - Mia Daley</option>
-                        <option>RA - Ben Tinnes</option>
-                        <option>RA - Josue Araica</option>
-                        <option>CA - Chilab Gurung</option>
-                        <option>CA - Zacarey Crump</option>
-                        <option>CA - Jacob Ellis</option>
-                        <option>CM - Sam Tran</option>
-                        <option>HD - Markel Harris</option>
-                    </select>
+                <div class="form-group hidden" id="otherItemGroup">
+                    <label for="otherItemDescription">Please describe item *</label>
+                    <input type="text" id="otherItemDescription" name="otherItemDescription" placeholder="Enter item description...">
                 </div>
 
                 <div class="form-group">
@@ -514,19 +580,46 @@
                     <input type="text" id="collateralItem" name="collateralItem" required placeholder="e.g., Student ID, Room Key">
                 </div>
 
-                <button type="submit" class="btn">Submit Transaction</button>
+                <div class="form-group">
+                    <label for="checkedOutBy">Checked Out By *</label>
+                    <select id="checkedOutBy" name="checkedOutBy" required>
+                        <option value="">Select staff member</option>
+                        <option value="RA - Liz Arteaga">RA - Liz Arteaga</option>
+                        <option value="RA - Kinslee Fullner">RA - Kinslee Fullner</option>
+                        <option value="RA - Matt Smith">RA - Matt Smith</option>
+                        <option value="RA - Ezra Power">RA - Ezra Power</option>
+                        <option value="RA - Shelby Bush">RA - Shelby Bush</option>
+                        <option value="RA - Cathleen Johnsen">RA - Cathleen Johnsen</option>
+                        <option value="RA - Aaron Kiah">RA - Aaron Kiah</option>
+                        <option value="RA - Owen Forsthoffer">RA - Owen Forsthoffer</option>
+                        <option value="RA - Kyler Moore">RA - Kyler Moore</option>
+                        <option value="RA - Mia Daley">RA - Mia Daley</option>
+                        <option value="RA - Ben Tinnes">RA - Ben Tinnes</option>
+                        <option value="RA - Josue Araica">RA - Josue Araica</option>
+                        <option value="CA - Chilab Gurung">CA - Chilab Gurung</option>
+                        <option value="CA - Zacarey Crump">CA - Zacarey Crump</option>
+                        <option value="CA - Jacob Ellis">CA - Jacob Ellis</option>
+                        <option value="CM - Sam Tran">CM - Sam Tran</option>
+                        <option value="HD - Markel Harris">HD - Markel Harris</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Submit Transaction</button>
             </form>
         </div>
 
         <div class="transaction-log">
             <h2>Recent Transactions</h2>
-            <div class="transaction-controls">
-                <div class="filter-group">
-                    <button type="button" class="filter-button active" data-filter="all">All</button>
-                    <button type="button" class="filter-button" data-filter="open">Currently Checked Out</button>
-                </div>
-                <input type="text" id="searchInput" class="search-input" placeholder="Search by name or item">
+            
+            <div class="search-box">
+                <input type="text" id="searchBox" placeholder="Search by name or item">
             </div>
+
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">ALL</button>
+                <button class="filter-btn" data-filter="checked-out">CURRENTLY CHECKED OUT</button>
+            </div>
+
             <div id="transactionList">
                 <div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>
             </div>
@@ -538,264 +631,166 @@
         const itemOptions = document.querySelectorAll('.item-option');
         const selectedItemInput = document.getElementById('selectedItem');
         const otherItemGroup = document.getElementById('otherItemGroup');
-        const otherItemInput = document.getElementById('otherItem');
-        const staffSelect = document.getElementById('staffMember');
+        const otherItemDescription = document.getElementById('otherItemDescription');
         const transactionList = document.getElementById('transactionList');
         const successMessage = document.getElementById('successMessage');
-        const filterButtons = document.querySelectorAll('.filter-button');
-        const searchInputEl = document.getElementById('searchInput');
-        const submitButton = document.querySelector('.btn');
-
+        const searchBox = document.getElementById('searchBox');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const submitBtn = document.getElementById('submitBtn');
+        
         let transactions = [];
         let currentFilter = 'all';
-        let searchTerm = '';
 
-        // Item selection
+        // Resident list for autocomplete - ALL 400+ RESIDENTS
+        const residents = [
+            "Lizabeth Arteaga", "Keeley O'Meara", "Yasmin Robertson", "Hailey Rosenberg", "Grace Clark", "Caitlin McFadden",
+            "Sophia Sansone", "Jacqueline Moreno", "Priscilla Basurto", "Scarlett Fritz", "Emory Eves", "Kennedi Wingfield",
+            "Kylie Crews", "Emma Leland", "Adelaide Kauchak", "Ashley Rogers", "Sophia Beran", "Eliana Wade", "Blessing Musau",
+            "Kendra Broom", "Bethany Stanley", "Gabby Pouncey", "Grace O'Connor", "Molly Pawsat", "Ella Growe", "Ashley Behan",
+            "Eve Finley", "Hanna Slama", "Ava Kunkel", "Bella Lupi", "Parmida Faizy", "Addy Cassell", "Deisy Trejo", "Karla Pichales",
+            "Sophie Hooker", "Emmaline Byrd", "Anna Potrusilova", "Melissa Gutierrez", "Brooke Murdock", "Keira Kinnison",
+            "Kinslee Fullner", "Kate Ellison", "Jaclyn Franciosa", "Maygan Munoz", "Brooke Burnor", "Caroline Griffith", "Reese Ruffalo",
+            "Meredith Tovey", "Charlotte Palen", "Maggie Lopez", "Piper Dunn", "Bria Mancuso", "Sophia Donnelly", "Avery Roughen",
+            "Frida Najera", "Lily Jeffrey-Patton", "Matthew Smith", "David Laurent", "Cade Kvarda", "Sebastian Aleksander", "Benjamin Vu",
+            "Giancarlo Rodriguez", "Chilab Gurung", "Patrick Troy", "Beckham Moses", "Jack Genovese", "Nick Macias", "Braxton Durrett",
+            "John Collins", "Cameron Ryle", "Ezra Power", "Hugo Sutton", "Max Courson", "Benjamin Brucato", "Luke Nguyen", "Anthony Ferullo",
+            "Jalen Walker", "Luke Lammot", "Hayden Hinds", "Jack Bottini", "Cade Alcantara", "Michael Pulvirenti", "Joe Revelos",
+            "Samson Romano", "Sidd Krishnamurthy", "Will Hedstrom", "Emmett Pratt", "Ryder Grieb", "Nik Hart", "John McNamara",
+            "Gavin Eades", "Brian Mata Mata", "Blake Schimmel", "William Everitt", "Dylan Palmer", "Watson Fleming", "Tommy Sticha",
+            "Pablo Lambreton Hervella", "Sony Vo", "Jake Bock", "Jake Engstrom", "Charles Coniaris", "Ashton Hendel", "Sammy Stremick",
+            "Carson Bradway", "Aaron Kiah", "Will Wood", "Brady Gustafson", "Max Roeder", "Charlie Lobb", "McCovey Jackson", "Andrew Watson",
+            "Andrew Lubbeck", "DJ Duntz", "Alex Kneas", "Reagan Wright", "Alejandro Arellano", "Jack Devine", "Dallas Womack", "Jax Nelson",
+            "Ben Olivero", "Zacarey Crump", "Logan Thistle", "Conner McLeod", "John Ghannoum", "Braden Boone", "Trevor Melton", "Ryan Miller",
+            "Voss Finkelstein", "Jake Trimble", "Henry Ferrari", "Martin Passino", "Brett Frauenhofer", "Tully De Smet", "Dutch Linerud",
+            "Kyler Patridge", "Caden Pratt", "Ethan Stell", "Ando Butner", "TJ Weber", "Scott Barrett", "Cade Rosenthal", "Tyler Spellman",
+            "Tino Rios", "Owen Forsthoffer", "Noah Epstein", "Wesley Rickers", "Adityakumar Linganuri", "Thor Gjerdrum", "Dominic DeRosa",
+            "Ryan Dunne", "Will Golinvaux", "Nicolas Leonard", "Steven Fridrich", "Keegan Glynn", "Harrison Ceppa", "Hardy Reisner",
+            "Riley Regan", "Alexander Hoshimi", "Beck Wesley", "Cathleen Johnsen", "Grace Twomey", "Amelia Bartsch", "Angelina Wiens",
+            "Abby Sjobeck", "Jessica Ward", "Abby Smith", "Reese Aldridge", "Sally Murrah", "Cassadie Armstrong", "Madi Weber", "Rachel Lear",
+            "Lucy Lakefish", "Shelby Bush", "Makayla Thompkins", "Janiya Odom", "Camila Bucio", "Carter Moore", "Gabrielle Dinan",
+            "Addie Redifer", "Alanys Freitas", "Keelyn Trubovich", "Gaby Manzur", "Margot McFarlane", "Elyse Ennis", "Izzy Conley",
+            "Sophia Ramsey", "Addy White", "Valeria Salinas", "Isabella Graham", "Iliana Almaraz", "Karina Kiesling", "Nathalie Ghannoum",
+            "Frida Riojas", "Tyler Bristol", "Sienna Wilkinson", "Lilianna Ramos", "Camila Aranda", "Sy'Rai Lee", "Keshia Hitoto",
+            "Karina Rodriguez-Alcorta", "Aubrey Perez", "Brilynn Conchas", "Gweneth Parker", "Samiya Lane", "Malorye Foster", "Amy Zollinger",
+            "Nora Fogarty", "Abbie Galloway", "Cha Cha Whitaker", "Emily Holladay", "Lisette Adrogue", "Macy Fitz", "Whitney Grunow",
+            "Jillian Sisley", "Mia Daley", "Sofia Brodie", "Charlotte Reed", "Ngoc Nguyen", "Nguyen Bao Phuc Do", "Maddy Dolence",
+            "Finley Clark", "Ashley Martin", "Blair Cooper", "Sarah Emery", "Darby Schroeder", "Emma Machado", "Kaitlyn Schroeder",
+            "Audrey Sell", "Joselyn Casas Suarez", "Sophie Siems", "Grace Wolff", "Zoe Vostry", "McKenna Morgan", "Sadie Tripaldi",
+            "Katie Barmmer", "Cate Thibeault", "Addison Besel", "Brigid Shane", "Sloane Longaker", "Sophia Curran", "Melina Nitsiotis",
+            "Aislin Fairchild", "Emily Clark", "Makayla Guerra", "Jasmine Perez", "Maia Rodriguez", "Coco Ardell", "Catie Schmitt",
+            "Ashley James", "Hannah McCann", "Morgan Miller", "Stella Boyd", "Makenzie Robinson", "Mia Martinez", "Kyler Moore",
+            "Lauren Mobeck", "Maddie Merchant", "Rylee Page", "Kate Meixelsperger", "Ryann Frazier", "Emme Weis", "Anabelle Budde",
+            "Claire Cox", "Lexi Thomas", "Ava Barton", "Amelia Sharpe", "Kaylee Roth", "Lucy O'Brien", "Claire Weindling", "Avery Yerasimides",
+            "Ben Tinnes", "Tyler Rager", "Brayden Winn", "Zion Junk", "Alex Miller", "Tobias Do", "Mark Tripple", "Spencer Smith",
+            "Connor Farris", "Alex Pisano", "Quinlan Hughes", "Zach Harlow", "Nicola Baccherini", "Giri Anup", "Josue Araica",
+            "Blaine Baker", "Connor Newman", "Emmett Nivaud", "Brady Evans", "AJ Dickinson", "Brian Macchiarola", "Nicholas Schroeder",
+            "Braxton Lewis", "Diego Pozos", "Ashton Wiseneske", "Allen Hernandez-Castro", "Stockard Bragan", "Will Gordon",
+            "Gavin Wupperman", "Max Nelson", "Landon Shaver", "Sam Tran", "Kristopher Thomas", "Derek Neal", "Brendan Baldelli",
+            "Jack Luster", "Andrew Schaeffer", "Jovanni Guerrero", "Jake Robertson", "Carlos Quintanilla", "Huesten Kolvet",
+            "Quentin DelSignore", "Jacob Ellis", "Khang Lam", "Davis Garrett", "Jacob Berg", "Adam Berg", "Parker Rice", "Baker Schell",
+            "Gabriel Mora", "Edwin Mireles", "Sam Trego", "Edwin Siembieda", "Gavin Reed", "Israel Ledezma", "Michael Finn",
+            "Jack Lachanski"
+        ];
+
+        // Populate datalist
+        const datalist = document.getElementById('residents');
+        residents.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        });
+
+        // Load transactions from localStorage
+        const loadTransactions = () => {
+            const saved = localStorage.getItem('sherleyTransactions');
+            if (saved) {
+                transactions = JSON.parse(saved);
+            }
+            transactions = [];
+            displayTransactions();
+        };
+
+        // Save transactions to localStorage
+        const saveTransactions = () => {
+            localStorage.setItem('sherleyTransactions', JSON.stringify(transactions));
+        };
+
+        // Handle item selection
         itemOptions.forEach(option => {
             option.addEventListener('click', () => {
-                itemOptions.forEach(o => o.classList.remove('selected'));
+                itemOptions.forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
-                const value = option.getAttribute('data-item');
-                selectedItemInput.value = value;
-
-                if (value === 'Other') {
-                    otherItemGroup.style.display = 'block';
-                    otherItemInput.required = true;
-                    otherItemInput.focus();
+                const item = option.getAttribute('data-item');
+                selectedItemInput.value = item;
+                
+                if (item === 'Other') {
+                    otherItemGroup.classList.remove('hidden');
+                    otherItemDescription.required = true;
                 } else {
-                    otherItemGroup.style.display = 'none';
-                    otherItemInput.required = false;
-                    otherItemInput.value = '';
+                    otherItemGroup.classList.add('hidden');
+                    otherItemDescription.required = false;
+                    otherItemDescription.value = '';
                 }
             });
         });
-
-        function isOverdue(t) {
-            if (t.type !== 'checkout' || t.returned) return false;
-            const created = t.createdAt;
-            if (!created) return false;
-            const sixHoursMs = 6 * 60 * 60 * 1000;
-            return (Date.now() - created) > sixHoursMs;
-        }
-
-        function displayTransactions() {
-            if (!transactions || transactions.length === 0) {
-                transactionList.innerHTML = '<div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>';
-                return;
-            }
-
-            let list = [...transactions];
-
-            if (currentFilter === 'open') {
-                list = list.filter(t => t.type === 'checkout' && !t.returned);
-            }
-
-            if (searchTerm && searchTerm.trim() !== '') {
-                const term = searchTerm.trim().toLowerCase();
-                list = list.filter(t =>
-                    (t.name && t.name.toLowerCase().includes(term)) ||
-                    (t.item && t.item.toLowerCase().includes(term))
-                );
-            }
-
-            if (list.length === 0) {
-                transactionList.innerHTML = '<div class="no-transactions">No matching transactions found. 🔍</div>';
-                return;
-            }
-
-            transactionList.innerHTML = list.map(t => `
-                <div class="transaction-item ${t.type}">
-                    <div class="transaction-header">
-                        <span class="transaction-name">${t.name}</span>
-                        <span class="transaction-type ${t.type}">${t.type === 'checkout' ? 'Check Out' : 'Return'}</span>
-                    </div>
-                    <div class="transaction-details">
-                        <strong>Item:</strong> ${t.item}<br>
-                        <strong>Collateral:</strong> ${t.collateral}<br>
-                        <strong>Checked Out By:</strong> ${t.staff || 'Not recorded'}
-                        ${t.type === 'checkout' ? `<div style="margin-top:8px;">
-                            <span class="status-pill ${
-                                t.returned ? 'status-closed' : (isOverdue(t) ? 'status-overdue' : 'status-open')
-                            }">
-                                ${
-                                    t.returned
-                                        ? 'Returned'
-                                        : (isOverdue(t) ? 'Overdue (6+ hrs)' : 'Checked Out')
-                                }
-                            </span>
-                            ${!t.returned ? `<button class="return-button" type="button" onclick="markAsReturned(${t.id})">
-                                Mark Returned
-                            </button>` : ''}
-                            ${t.returned ? `<button class="undo-button" type="button" onclick="undoReturn(${t.id})">
-                                Undo
-                            </button>` : ''}
-                        </div>` : ''}
-                    </div>
-                    <div class="transaction-time">${t.timestamp || ''}</div>
-                </div>
-            `).join('');
-        }
-
-        function markAsReturned(id) {
-            const existing = transactions.find(t => t.id === id);
-            if (!existing || existing.type !== 'checkout' || existing.returned) return;
-
-            existing.returned = true;
-
-            const now = Date.now();
-            const returnTransaction = {
-                id: now,
-                name: existing.name,
-                type: 'return',
-                item: existing.item,
-                collateral: existing.collateral,
-                staff: existing.staff,
-                timestamp: new Date().toLocaleString(),
-                returned: true,
-                sourceId: existing.id,
-                createdAt: now
-            };
-
-            transactions.unshift(returnTransaction);
-            displayTransactions();
-            sendToGoogleSheets(returnTransaction);
-        }
-
-        function undoReturn(id) {
-            const checkout = transactions.find(t => t.id === id);
-            if (!checkout || checkout.type !== 'checkout' || !checkout.returned) return;
-
-            checkout.returned = false;
-            transactions = transactions.filter(t => !(t.type === 'return' && t.sourceId === id));
-            displayTransactions();
-        }
-
-        window.markAsReturned = markAsReturned;
-        window.undoReturn = undoReturn;
-
-        filterButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                filterButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentFilter = btn.getAttribute('data-filter') || 'all';
-                displayTransactions();
-            });
-        });
-
-        if (searchInputEl) {
-            searchInputEl.addEventListener('input', () => {
-                searchTerm = searchInputEl.value;
-                displayTransactions();
-            });
-        }
-
-        // Send a transaction to Google Sheets (POST)
-        async function sendToGoogleSheets(transaction) {
-            try {
-                await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec', {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: transaction.name,
-                        collateral: transaction.collateral,
-                        item: transaction.item,
-                        type: transaction.type,
-                        checkedOutBy: transaction.staff
-                    })
-                });
-                console.log("Transaction sent to Google Sheets successfully");
-            } catch (error) {
-                console.error("Error sending to Google Sheets", error);
-            }
-        }
-
-        // Load live transactions from Google Sheets (GET)
-        async function loadLiveTransactions() {
-            try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec');
-                const allTransactions = await response.json();
-
-                const now = Date.now();
-                transactions = (allTransactions || []).map((t, index) => {
-                    const ts = t.timestamp || t.time || "";
-                    const createdAt = t.createdAt
-                        || (ts ? (Date.parse(ts) || (now + index)) : (now + index));
-                    const type = t.type || t.checkoutReturn || 'checkout';
-                    const returned = (typeof t.returned !== 'undefined')
-                        ? t.returned
-                        : (type === 'return');
-
-                    return {
-                        id: t.id || (now + index),
-                        name: t.name || t.resident || "",
-                        type,
-                        item: t.item || "",
-                        collateral: t.collateral || "",
-                        staff: t.checkedOutBy || t.staff || "Not recorded",
-                        timestamp: ts,
-                        createdAt,
-                        returned
-                    };
-                });
-
-                displayTransactions();
-            } catch (error) {
-                console.error("Error loading live transactions", error);
-            }
-        }
 
         // Handle form submission
         form.addEventListener('submit', (e) => {
             e.preventDefault();
 
             if (!selectedItemInput.value) {
-                alert('Please select an equipment item.');
+                alert('Please select an equipment item');
                 return;
             }
+
+            if (selectedItemInput.value === 'Other' && !otherItemDescription.value.trim()) {
+                alert('Please describe the item');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
 
             const formData = new FormData(form);
-            let itemName = selectedItemInput.value;
+            const timestamp = new Date().toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit',
+                hour12: true,
+                timeZone: 'America/Chicago'
+            });
 
-            if (itemName === 'Other') {
-                const otherText = otherItemInput.value.trim();
-                if (!otherText) {
-                    alert('Please describe the "Other" item.');
-                    otherItemInput.focus();
-                    return;
-                }
-                itemName = otherText;
-            }
-
-            const staff = formData.get('staffMember');
-            if (!staff) {
-                alert('Please choose who checked it out.');
-                return;
-            }
-
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.textContent = 'Saving...';
-            }
-
-            const now = Date.now();
-            const type = formData.get('transactionType') || 'checkout';
+            const item = selectedItemInput.value === 'Other' 
+                ? otherItemDescription.value 
+                : selectedItemInput.value;
 
             const transaction = {
-                id: now,
+                id: Date.now(),
                 name: formData.get('residentName'),
-                type: type,
-                item: itemName,
+                type: formData.get('transactionType'),
+                item: item,
                 collateral: formData.get('collateralItem'),
-                staff: staff,
-                timestamp: new Date().toLocaleString(),
-                returned: type === 'return',
-                createdAt: now
+                staff: formData.get('checkedOutBy'),
+                timestamp: timestamp,
+                createdAt: Date.now(),
+                returned: false
             };
 
-            // Optimistic update locally
+            if (transaction.type === 'return') {
+                const checkout = transactions.find(t => 
+                    t.name === transaction.name && 
+                    t.item === transaction.item && 
+                    t.type === 'checkout' && 
+                    !t.returned
+                );
+                if (checkout) {
+                    checkout.returned = true;
+                }
+            }
+
             transactions.unshift(transaction);
+            saveTransactions();
             displayTransactions();
+
             sendToGoogleSheets(transaction);
 
             successMessage.classList.add('show');
@@ -804,28 +799,160 @@
             }, 3000);
 
             form.reset();
-            itemOptions.forEach(o => o.classList.remove('selected'));
+            itemOptions.forEach(opt => opt.classList.remove('selected'));
             selectedItemInput.value = '';
-            otherItemGroup.style.display = 'none';
-            otherItemInput.required = false;
-            otherItemInput.value = '';
-
-            if (submitButton) {
-                setTimeout(() => {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Submit Transaction';
-                }, 500);
-            }
-
-            // Optionally refresh from live source after a short delay
-            setTimeout(loadLiveTransactions, 2000);
+            otherItemGroup.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Transaction';
         });
 
-        // On page load: get live shared data and refresh every 60s
-        window.onload = function () {
-            loadLiveTransactions();
-            setInterval(loadLiveTransactions, 60000); // every 60 seconds
+        // Send to Google Sheets
+        async function sendToGoogleSheets(transaction) {
+            try {
+                await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timestamp: transaction.timestamp,
+                        name: transaction.name,
+                        collateral: transaction.collateral,
+                        item: transaction.item,
+                        type: transaction.type,
+                        checkedOutBy: transaction.staff
+                    })
+                });
+            } catch (error) {
+                console.error("Error sending to Google Sheets:", error);
+            }
+        }
+
+        // Mark as returned
+        window.markReturned = (id) => {
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction && !transaction.returned) {
+                const returnTime = new Date().toLocaleString('en-US', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit',
+                    hour12: true,
+                    timeZone: 'America/Chicago'
+                });
+                transaction.returned = true;
+                transaction.returnedAt = returnTime;
+                saveTransactions();
+                displayTransactions();
+
+                const returnRecord = {
+                    id: Date.now(),
+                    name: transaction.name,
+                    type: 'return',
+                    item: transaction.item,
+                    collateral: transaction.collateral,
+                    staff: transaction.staff,
+                    timestamp: returnTime,
+                    createdAt: Date.now(),
+                    returned: true
+                };
+                sendToGoogleSheets(returnRecord);
+            }
         };
+
+        // Undo return
+        window.undoReturn = (id) => {
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction && transaction.returned) {
+                transaction.returned = false;
+                saveTransactions();
+                displayTransactions();
+            }
+        };
+
+        // Display transactions
+        const displayTransactions = () => {
+            const searchTerm = searchBox.value.toLowerCase();
+            let filtered = transactions;
+
+            if (searchTerm) {
+                filtered = filtered.filter(t => 
+                    t.name.toLowerCase().includes(searchTerm) ||
+                    t.item.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            if (currentFilter === 'checked-out') {
+                filtered = filtered.filter(t => t.type === 'checkout' && !t.returned);
+            }
+
+            if (filtered.length === 0) {
+                transactionList.innerHTML = '<div class="no-transactions">No transactions yet. Start by checking out equipment! 🎯</div>';
+                return;
+            }
+
+            transactionList.innerHTML = filtered.map(t => {
+                const now = Date.now();
+                const ageHours = (now - t.createdAt) / (1000 * 60 * 60);
+                const isOverdue = t.type === 'checkout' && !t.returned && ageHours >= 6;
+
+                let statusBadge = '';
+                let actionButtons = '';
+
+                if (t.type === 'checkout') {
+                    if (t.returned) {
+                        statusBadge = '<span class="status-badge returned">✓ RETURNED</span>';
+                        const returnedTime = t.returnedAt || t.timestamp;
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn undo" onclick="undoReturn(${t.id})">UNDO</button>
+                        </div>
+                        <div class="transaction-time">Returned: ${returnedTime}</div>`;
+                    } else if (isOverdue) {
+                        statusBadge = '<span class="status-badge overdue">⚠ OVERDUE (6+ HRS)</span>';
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn mark-returned" onclick="markReturned(${t.id})">MARK RETURNED</button>
+                        </div>`;
+                    } else {
+                        statusBadge = '<span class="status-badge">📋 CHECKED OUT</span>';
+                        actionButtons = `<div class="transaction-actions">
+                            <button class="action-btn mark-returned" onclick="markReturned(${t.id})">MARK RETURNED</button>
+                        </div>`;
+                    }
+                } else {
+                    statusBadge = '<span class="status-badge return">✓ RETURN</span>';
+                }
+
+                return `
+                    <div class="transaction-item ${t.type}">
+                        <div class="transaction-header">
+                            <span class="transaction-name">${t.name}</span>
+                            <span class="transaction-type ${t.type}">${t.type === 'checkout' ? '📤 CHECK OUT' : '📥 RETURN'}</span>
+                        </div>
+                        <div class="transaction-details">
+                            <strong>Item:</strong> ${t.item}<br>
+                            <strong>Collateral:</strong> ${t.collateral}<br>
+                            <strong>Checked Out By:</strong> ${t.staff}
+                        </div>
+                        ${statusBadge}
+                        <div class="transaction-time">${t.timestamp}</div>
+                        ${actionButtons}
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // Search functionality
+        searchBox.addEventListener('input', () => {
+            displayTransactions();
+        });
+
+        // Filter buttons
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.getAttribute('data-filter');
+                displayTransactions();
+            });
+        });
+
+        // Load transactions on page load
+        loadTransactions();
     </script>
 </body>
 </html>
