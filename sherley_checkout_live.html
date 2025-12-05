@@ -706,21 +706,15 @@
                 const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec?action=read');
                 const data = await response.json();
                 
-                console.log('Data from Google Sheets:', data);
-                
                 if (data && Array.isArray(data)) {
                     data.forEach((row, idx) => {
-                        // Skip header row (first row: idx === 0)
-                        if (idx === 0) {
-                            console.log('Header row:', row);
-                            return;
-                        }
+                        // Skip header row (first row)
+                        if (idx === 0) return;
                         
                         // Row is array format: [Timestamp, name, Collateral, Item, Checkout/Return, checkedOutBy]
-                        // Index:                 [0,         1,     2,          3,     4,                 5]
                         if (row[1] && row[2] && row[3]) { // name, Collateral, Item
                             const transaction = {
-                                id: Date.now() + idx, // Make unique ID
+                                id: idx,
                                 timestamp: row[0] || '', // Already in Chicago time from Apps Script
                                 name: row[1] || '',
                                 collateral: row[2] || '',
@@ -731,12 +725,9 @@
                                 returned: false
                             };
                             transactions.push(transaction);
-                            console.log('Loaded transaction:', transaction);
                         }
                     });
                 }
-                
-                console.log('Total transactions loaded:', transactions.length);
             } catch (error) {
                 console.error("Error loading from Google Sheets:", error);
             }
@@ -900,7 +891,21 @@
         };
 
         // Display transactions
-        const displayTransactions = () => {
+                function formatChicagoTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                timeZone: 'America/Chicago',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+const displayTransactions = () => {
             const searchTerm = searchBox.value.toLowerCase();
             let filtered = transactions;
 
@@ -935,7 +940,7 @@
                         actionButtons = `<div class="transaction-actions">
                             <button class="action-btn undo" onclick="undoReturn(${t.id})">UNDO</button>
                         </div>
-                        <div class="transaction-time">Returned: ${returnedTime}</div>`;
+                        <div class="transaction-time">Returned: ${formatChicagoTime(returnedTime)}</div>`;
                     } else if (isOverdue) {
                         statusBadge = '<span class="status-badge overdue">⚠ OVERDUE (6+ HRS)</span>';
                         actionButtons = `<div class="transaction-actions">
@@ -963,7 +968,7 @@
                             <strong>Checked Out By:</strong> ${t.staff}
                         </div>
                         ${statusBadge}
-                        <div class="transaction-time">${t.timestamp}</div>
+                        <div class="transaction-time">${formatChicagoTime(t.timestamp)}</div>
                         ${actionButtons}
                     </div>
                 `;
