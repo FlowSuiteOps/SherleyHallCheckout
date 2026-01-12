@@ -702,39 +702,79 @@
         });
 
         // Load transactions from Google Sheets
-        async function loadFromGoogleSheets() {
-            try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec?action=read');
-                const data = await response.json();
-                
-                if (data && Array.isArray(data)) {
-                    data.forEach((row, idx) => {
-                        // Skip header row (first row)
-                        if (idx === 0) return;
-                        
-                        // Row is array format: [Timestamp, name, Collateral, Item, Checkout/Return, checkedOutBy]
-                        if (row[1] && row[2] && row[3]) { // name, Collateral, Item
-                            const transaction = {
-                                id: idx,
-                                timestamp: row[0] || '', // Already in Chicago time from Apps Script
-                                name: row[1] || '',
-                                collateral: row[2] || '',
-                                item: row[3] || '',
-                                type: (row[4] || '').toLowerCase() === 'checkout' ? 'checkout' : 'return',
-                                staff: row[5] || '',
-                                createdAt: Date.now() - (data.length - idx) * 60000,
-                                returned: false
-                            };
-                            transactions.push(transaction);
-                        }
+    async function loadFromGoogleSheets() {
+    try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbzXDRr2TbMBsKvBTSpB_ZO-2iviV09C9JSEaQZOTLG-H8PkTuYYqtdUDA21F2yzmH-E/exec?action=read');
+        const data = await response.json();
+
+        transactions = []; // reset so we don't keep duplicating
+
+        if (data && Array.isArray(data)) {
+            const checkoutTransactions = [];
+            const returnEvents = [];
+
+            data.forEach((row, idx) => {
+                if (idx === 0) return; // skip header
+
+                const timestamp = row[0] || '';
+                const name = row[1] || '';
+                const collateral = row[2] || '';
+                const item = row[3] || '';
+                const typeRaw = (row[4] || '').toLowerCase();
+                const staff = row[5] || '';
+
+                if (!name || !collateral || !item) return;
+
+                const base = {
+                    id: idx, // stable per sheet row
+                    timestamp,
+                    name,
+                    collateral,
+                    item,
+                    staff,
+                    createdAt: Date.now() - (data.length - idx) * 60000
+                };
+
+                if (typeRaw === 'checkout') {
+                    checkoutTransactions.push({
+                        ...base,
+                        type: 'checkout',
+                        returned: false,
+                        returnedAt: null
+                    });
+                } else if (typeRaw === 'return') {
+                    returnEvents.push({
+                        ...base,
+                        type: 'return'
                     });
                 }
-            } catch (error) {
-                console.error("Error loading from Google Sheets:", error);
-            }
-            
-            displayTransactions();
+            });
+
+            // Apply return events to matching open checkouts
+            returnEvents.forEach(ret => {
+                const match = checkoutTransactions
+                    .slice() // work on a copy for safety
+                    .reverse() // prefer most recent checkout
+                    .find(t =>
+                        t.name === ret.name &&
+                        t.item === ret.item &&
+                        !t.returned
+                    );
+                if (match) {
+                    match.returned = true;
+                    match.returnedAt = ret.timestamp || ret.createdAt;
+                }
+            });
+
+            // Final transactions array = checkouts (with returned flags) + raw return rows if you still want them
+            transactions = checkoutTransactions; // or [...checkoutTransactions, ...returnEvents] if you want to show both
         }
+    } catch (error) {
+        console.error("Error loading from Google Sheets:", error);
+    }
+
+    displayTransactions();
+}
 
         // Save transactions to localStorage
         const saveTransactions = () => {
